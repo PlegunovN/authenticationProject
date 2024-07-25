@@ -8,6 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// hi
 func main() {
 	sLogger := logger.InitLogger()
 	defer sLogger.Sync()
