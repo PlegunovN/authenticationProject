@@ -28,3 +28,8 @@ func (s Service) DeleteUser(ctx context.Context, id int64) error {
 	err := s.client.deleteUser(ctx, id)
 	return err
 }
+
+func (s Service) SignIn(ctx context.Context, login, password string) (*Users, error) {
+	user, err := s.client.signIn(ctx, login, password)
+	return user, err
+}

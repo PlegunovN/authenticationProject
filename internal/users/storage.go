@@ -96,3 +96,14 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 
 	return nil
 }
+
+func (s client) signIn(ctx context.Context, login, password string) (*Users, error) {
+	query := "SELECT * FROM users WHERE login = $1 AND password = $2"
+	user := &Users{}
+	err := s.db.GetContext(ctx, user, query, login, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
