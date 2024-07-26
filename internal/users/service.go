@@ -19,7 +19,12 @@ func New(db *sqlx.DB, logger *zap.SugaredLogger) *Service {
 	}
 }
 
-func (s Service) SignUp(ctx context.Context, login, password string) error {
-	err := s.client.signUp(ctx, Users{Login: login, Password: password})
+func (s Service) SignUp(ctx context.Context, login, password, token string) error {
+	err := s.client.signUp(ctx, Users{Login: login, Password: password}, Tokens{Token: token})
+	return err
+}
+
+func (s Service) DeleteUser(ctx context.Context, id int64) error {
+	err := s.client.deleteUser(ctx, id)
 	return err
 }
