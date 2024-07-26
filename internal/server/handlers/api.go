@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"authenticationProject/internal/users"
+	"github.com/PlegunovN/authenticationProject/internal/users"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )

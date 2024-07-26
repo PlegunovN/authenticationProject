@@ -1,9 +1,9 @@
 package server
 
 import (
-	"authenticationProject/internal/server/handlers"
-	"authenticationProject/internal/users"
 	"fmt"
+	"github.com/PlegunovN/authenticationProject/internal/server/handlers"
+	"github.com/PlegunovN/authenticationProject/internal/users"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"net/http"
