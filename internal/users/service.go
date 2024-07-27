@@ -19,8 +19,8 @@ func New(db *sqlx.DB, logger *zap.SugaredLogger) *Service {
 	}
 }
 
-func (s Service) SignUp(ctx context.Context, login, password, token string) error {
-	err := s.client.signUp(ctx, Users{Login: login, Password: password}, Tokens{Token: token})
+func (s Service) SignUp(ctx context.Context, login, password string) error {
+	err := s.client.signUp(ctx, Users{Login: login, Password: password})
 	return err
 }
 
