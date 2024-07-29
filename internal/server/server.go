@@ -22,6 +22,7 @@ func AuthStart(storage *users.Service, sLogger *zap.SugaredLogger) {
 
 	r.HandleFunc("/sign_up", api.SignUp).Methods("POST")
 	r.HandleFunc("/delete/{id}", api.DeleteUser).Methods("DELETE")
+	r.HandleFunc("/sign_in", api.SignIn).Methods("GET")
 
 	err := http.ListenAndServe("127.0.0.1:8081", r)
 	sLogger.Fatalf("server auth dont start, err: %w", err)

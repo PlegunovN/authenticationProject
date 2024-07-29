@@ -2,6 +2,8 @@ package users
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
@@ -11,7 +13,14 @@ type client struct {
 	logger *zap.SugaredLogger
 }
 
-func (s client) signUp(ctx context.Context, users Users, tokens Tokens) error {
+func hashPassword(password string) string {
+	sum := sha256.Sum256([]byte(password))
+
+	hash := fmt.Sprint(sum)
+	return hash
+}
+
+func (s client) signUp(ctx context.Context, users Users) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
@@ -21,40 +30,12 @@ func (s client) signUp(ctx context.Context, users Users, tokens Tokens) error {
 		tx.Commit()
 	}()
 
-	//post login password
+	//обработка хеш
+	hash := hashPassword(users.Password)
+
+	//записываем логин и хеш пароля
 	query := "INSERT INTO users(login, password) VALUES ($1, $2)"
-	_, err = tx.ExecContext(ctx, query, users.Login, users.Password)
-	if err != nil {
-		return err
-	}
-
-	//берем только добавленные id and password
-	query = "SELECT id, password FROM users WHERE login = $1 AND password = $2"
-	u := new(Users)
-	err = tx.GetContext(ctx, u, query, users.Login, users.Password)
-	if err != nil {
-		return err
-	}
-
-	//добавляем пароль в токен
-	//обработать токен!
-	query = "INSERT INTO tokens(token) VALUES ($1)"
-	_, err = tx.ExecContext(ctx, query, u.Password)
-	if err != nil {
-		return err
-	}
-
-	////берем id из таблицы токенов
-	query = "SELECT id FROM tokens WHERE token = $1"
-	t := new(Tokens)
-	err = tx.GetContext(ctx, t, query, tokens.Token)
-	if err != nil {
-		return err
-	}
-	//
-	////соединяем таблицы юзеров и токенов
-	query = "INSERT INTO usersandtokens(userid, tokenid) VALUES ($1, $2)"
-	_, err = tx.ExecContext(ctx, query, u.ID, t.ID)
+	_, err = tx.ExecContext(ctx, query, users.Login, hash)
 	if err != nil {
 		return err
 	}
@@ -72,27 +53,50 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 		tx.Commit()
 	}()
 
-	query := "SELECT tokens.id FROM tokens INNER JOIN usersandtokens ON tokens.id = usersandtokens.tokenid WHERE usersandtokens.userid = $1"
-	var res int64
-	err = tx.GetContext(ctx, res, query, id)
-
-	query = "DELETE FROM usersandtokens  WHERE usersandtokens.userid = $1"
+	query := "DELETE FROM users  WHERE id = $1"
 	_, err = tx.ExecContext(ctx, query, id)
-	if err != nil {
-		return err
-	}
-
-	query = "DELETE FROM users WHERE users.id = $1"
-	_, err = tx.ExecContext(ctx, query, id)
-	if err != nil {
-		return err
-	}
-
-	query = "DELETE FROM tokens WHERE tokens.id=$1"
-	_, err = tx.ExecContext(ctx, query, res)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users, error) {
+	tx, err := s.db.BeginTxx(ctx, nil)
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			s.logger.Errorf("sign in error - rollback: %w", err)
+		}
+		tx.Commit()
+	}()
+	//получить токен по логину
+	query := "SELECT password FROM users WHERE login = $1"
+	var paswFromTable string
+	err = tx.GetContext(ctx, &paswFromTable, query, login)
+	if err != nil {
+		return nil, err
+	}
+
+	//преобразовать пароль от пользователя в хеш
+	pFU := hashPassword(paswFromUser)
+
+	// сравнить хеш из базы и от пользователя
+	if paswFromTable == pFU {
+		query = "SELECT * FROM users WHERE login = $1 AND password = $2"
+		user := &Users{}
+		err = tx.GetContext(ctx, user, query, login, paswFromTable)
+		if err != nil {
+			return nil, err
+		}
+
+		return user, nil
+	} else {
+		incorectedPasW := "incorectedPassWord"
+		user := &Users{Login: login, Password: incorectedPasW}
+		return user, err
+	}
+
+	return nil, err
 }
