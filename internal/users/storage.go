@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+	"time"
 )
 
 type client struct {
@@ -15,9 +17,21 @@ type client struct {
 
 func hashPassword(password string) string {
 	sum := sha256.Sum256([]byte(password))
-
 	hash := fmt.Sprint(sum)
 	return hash
+}
+
+func jwtToken(tokenSecretKey string) string {
+	// Создаём данные для токена
+	claims := make(jwt.MapClaims)
+	claims["exp"] = time.Now().Add(time.Minute * 1).Unix() // Устанавливаем срок действия токена в 1 минут
+
+	// Генерируем подпись
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, _ := token.SignedString([]byte(tokenSecretKey)) // Используем секретный ключ для подписи токена
+
+	strToken := fmt.Sprint(signedToken)
+	return strToken // Выводим сгенерированный токен
 }
 
 func (s client) signUp(ctx context.Context, users Users) error {
@@ -62,7 +76,7 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users, error) {
+func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users, string, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
@@ -76,7 +90,7 @@ func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users,
 	var paswFromTable string
 	err = tx.GetContext(ctx, &paswFromTable, query, login)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	//преобразовать пароль от пользователя в хеш
@@ -84,19 +98,47 @@ func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users,
 
 	// сравнить хеш из базы и от пользователя
 	if paswFromTable == pFU {
+		//создать токен jwt
+		tokenSecretKey := "secretKey"
+		token := jwtToken(tokenSecretKey)
+
+		//записываем токен в базу
+		query = "UPDATE users SET token = $1 WHERE login = $2"
+		_, err = tx.ExecContext(ctx, query, token, login)
+		if err != nil {
+			return nil, "", err
+		}
+		// otдаем для примера user
 		query = "SELECT * FROM users WHERE login = $1 AND password = $2"
 		user := &Users{}
 		err = tx.GetContext(ctx, user, query, login, paswFromTable)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
-		return user, nil
+		return user, token, nil
+
 	} else {
 		incorectedPasW := "incorectedPassWord"
 		user := &Users{Login: login, Password: incorectedPasW}
-		return user, err
+		return user, "", err
 	}
 
-	return nil, err
+	return nil, "", err
+}
+
+func (s client) work(ctx context.Context, login, tokenFromUser string) (string, error) {
+	//получаем токен из базы
+	var tokenFromBase string
+	query := "SELECT token FROM users WHERE login = $1"
+	err := s.db.GetContext(ctx, &tokenFromBase, query, login)
+	if err != nil {
+		return "", err
+	}
+	if tokenFromBase == tokenFromUser {
+		resp := "it's working"
+		return resp, nil
+	}
+
+	return "", nil
 }
