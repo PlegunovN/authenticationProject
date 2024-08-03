@@ -20,7 +20,7 @@ func New(db *sqlx.DB, logger *zap.SugaredLogger) *Service {
 }
 
 func (s Service) SignUp(ctx context.Context, login, password string) error {
-	err := s.client.signUp(ctx, Users{Login: login, Password: password})
+	err := s.client.createUser(ctx, Users{Login: login, Password: password})
 	return err
 }
 
@@ -30,7 +30,7 @@ func (s Service) DeleteUser(ctx context.Context, id int64) error {
 }
 
 func (s Service) SignIn(ctx context.Context, login, password string) (*Users, string, error) {
-	user, token, err := s.client.signIn(ctx, login, password)
+	user, token, err := s.client.loginUser(ctx, login, password)
 	return user, token, err
 }
 

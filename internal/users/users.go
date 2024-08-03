@@ -34,14 +34,15 @@ func jwtToken(tokenSecretKey string) string {
 	return strToken // Выводим сгенерированный токен
 }
 
-func (s client) signUp(ctx context.Context, users Users) error {
+func (s client) createUser(ctx context.Context, users Users) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
 			tx.Rollback()
-			s.logger.Errorf("Rollback, sign up error: %w", err)
+			s.logger.Errorf("Rollback,  createUser error: %w", err)
 		}
 		tx.Commit()
+		return
 	}()
 
 	//обработка хеш
@@ -63,8 +64,10 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 		if err != nil {
 			tx.Rollback()
 			s.logger.Errorf("Delete User error - rollback: %w", err)
+			return
 		}
 		tx.Commit()
+		return
 	}()
 
 	query := "DELETE FROM users  WHERE id = $1"
@@ -76,14 +79,16 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users, string, error) {
+func (s client) loginUser(ctx context.Context, login, paswFromUser string) (*Users, string, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
 			tx.Rollback()
-			s.logger.Errorf("sign in error - rollback: %w", err)
+			s.logger.Errorf("login error - rollback: %w", err)
+			return
 		}
 		tx.Commit()
+		return
 	}()
 	//получить токен по логину
 	query := "SELECT password FROM users WHERE login = $1"

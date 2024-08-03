@@ -21,18 +21,17 @@ func (a Api) Work(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := a.Storage.Work(ctx, login, token)
+	resp, err := a.storage.Work(ctx, login, token)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		a.logger.Errorf("error select work: %w", err)
+		return
+	}
 
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		a.SLogger.Errorf("error select work: %w", err)
-		return
-	}
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		a.SLogger.Errorf("error Encode text in work.go: %w", err)
+		a.logger.Errorf("error Encode text in work.go: %w", err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
