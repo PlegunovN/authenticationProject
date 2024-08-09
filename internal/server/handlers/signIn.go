@@ -21,7 +21,7 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, token, err := a.storage.SignIn(ctx, login, password)
+	user, err := a.storage.SignIn(ctx, login, password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("error select books: %w", err)
@@ -39,11 +39,6 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 		a.logger.Errorf("error Encode books in getbooks.go: %w", err)
 		return
 	}
-	err = json.NewEncoder(w).Encode(token)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		a.logger.Errorf("error Encode books in getbooks.go: %w", err)
-		return
-	}
+
 	w.WriteHeader(http.StatusOK)
 }

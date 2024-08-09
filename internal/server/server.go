@@ -21,7 +21,7 @@ func AuthStart(storage *users.Service, logger *zap.SugaredLogger) {
 	logger.Info("server start at 8081")
 
 	r.HandleFunc("/sign_up", api.SignUp).Methods("POST")
-	r.HandleFunc("/delete/{id}", api.DeleteUser).Methods("DELETE")
+	r.HandleFunc("/delete", api.DeleteUser).Methods("DELETE")
 	r.HandleFunc("/sign_in", api.SignIn).Methods("GET")
 	r.HandleFunc("/work", api.Work).Methods("GET")
 

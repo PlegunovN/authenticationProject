@@ -2,36 +2,13 @@ package users
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
-	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
-	"time"
 )
 
 type client struct {
 	db     *sqlx.DB
 	logger *zap.SugaredLogger
-}
-
-func hashPassword(password string) string {
-	sum := sha256.Sum256([]byte(password))
-	hash := fmt.Sprint(sum)
-	return hash
-}
-
-func jwtToken(tokenSecretKey string) string {
-	// Создаём данные для токена
-	claims := make(jwt.MapClaims)
-	claims["exp"] = time.Now().Add(time.Minute * 1).Unix() // Устанавливаем срок действия токена в 1 минут
-
-	// Генерируем подпись
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, _ := token.SignedString([]byte(tokenSecretKey)) // Используем секретный ключ для подписи токена
-
-	strToken := fmt.Sprint(signedToken)
-	return strToken // Выводим сгенерированный токен
 }
 
 func (s client) createUser(ctx context.Context, users Users) error {
@@ -45,12 +22,9 @@ func (s client) createUser(ctx context.Context, users Users) error {
 		return
 	}()
 
-	//обработка хеш
-	hash := hashPassword(users.Password)
-
 	//записываем логин и хеш пароля
 	query := "INSERT INTO users(login, password) VALUES ($1, $2)"
-	_, err = tx.ExecContext(ctx, query, users.Login, hash)
+	_, err = tx.ExecContext(ctx, query, users.Login, users.Password)
 	if err != nil {
 		return err
 	}
@@ -58,7 +32,7 @@ func (s client) createUser(ctx context.Context, users Users) error {
 	return nil
 }
 
-func (s client) deleteUser(ctx context.Context, id int64) error {
+func (s client) deleteUser(ctx context.Context, login string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
@@ -70,8 +44,8 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 		return
 	}()
 
-	query := "DELETE FROM users  WHERE id = $1"
-	_, err = tx.ExecContext(ctx, query, id)
+	query := "DELETE FROM users  WHERE login = $1"
+	_, err = tx.ExecContext(ctx, query, login)
 	if err != nil {
 		return err
 	}
@@ -79,7 +53,7 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s client) loginUser(ctx context.Context, login, paswFromUser string) (*Users, string, error) {
+func (s client) loginUser(ctx context.Context, login, hashFromUser, token string) (*Users, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
@@ -92,44 +66,37 @@ func (s client) loginUser(ctx context.Context, login, paswFromUser string) (*Use
 	}()
 	//получить токен по логину
 	query := "SELECT password FROM users WHERE login = $1"
-	var paswFromTable string
-	err = tx.GetContext(ctx, &paswFromTable, query, login)
+	var hashFromTable string
+	err = tx.GetContext(ctx, &hashFromTable, query, login)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	//преобразовать пароль от пользователя в хеш
-	pFU := hashPassword(paswFromUser)
-
 	// сравнить хеш из базы и от пользователя
-	if paswFromTable == pFU {
-		//создать токен jwt
-		tokenSecretKey := "secretKey"
-		token := jwtToken(tokenSecretKey)
+	if hashFromTable == hashFromUser {
 
 		//записываем токен в базу
 		query = "UPDATE users SET token = $1 WHERE login = $2"
 		_, err = tx.ExecContext(ctx, query, token, login)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		// otдаем для примера user
 		query = "SELECT * FROM users WHERE login = $1 AND password = $2"
 		user := &Users{}
-		err = tx.GetContext(ctx, user, query, login, paswFromTable)
+		err = tx.GetContext(ctx, user, query, login, hashFromTable)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
-		return user, token, nil
+		return user, err
 
 	} else {
 		incorectedPasW := "incorectedPassWord"
 		user := &Users{Login: login, Password: incorectedPasW}
-		return user, "", err
+		return user, err
 	}
 
-	return nil, "", err
 }
 
 func (s client) work(ctx context.Context, login, tokenFromUser string) (string, error) {
