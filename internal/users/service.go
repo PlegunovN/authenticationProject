@@ -65,7 +65,13 @@ func (s Service) SignIn(ctx context.Context, login, password string) (*Users, er
 	return user, err
 }
 
-func (s Service) Work(ctx context.Context, login, tokenFromUser string) (string, error) {
-	resp, err := s.client.work(ctx, login, tokenFromUser)
+func (s Service) Work() (string, error) {
+
+	resp, err := s.client.work()
 	return resp, err
+}
+
+func (s Service) ValidateToken(ctx context.Context, login, token string) error {
+	err := s.client.validateToken(ctx, login, token)
+	return err
 }

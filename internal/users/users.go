@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
@@ -99,18 +100,25 @@ func (s client) loginUser(ctx context.Context, login, hashFromUser, token string
 
 }
 
-func (s client) work(ctx context.Context, login, tokenFromUser string) (string, error) {
+func (s client) work() (string, error) {
+
+	return "it's working", nil
+}
+
+func (s client) validateToken(ctx context.Context, login, tokenFromUser string) error {
 	//получаем токен из базы
 	var tokenFromBase string
 	query := "SELECT token FROM users WHERE login = $1"
 	err := s.db.GetContext(ctx, &tokenFromBase, query, login)
 	if err != nil {
-		return "", err
+		return err
 	}
-	if tokenFromBase == tokenFromUser {
-		resp := "it's working"
-		return resp, nil
+	if tokenFromBase != tokenFromUser {
+		s.logger.Info("invalid token")
+		err = errors.New("ощибка сравнения токенов")
+
+		return err
 	}
 
-	return "", nil
+	return err
 }
