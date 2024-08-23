@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/gorilla/context"
 	"net/http"
 )
 
@@ -15,7 +16,13 @@ func (a Api) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := a.storage.DeleteUser(ctx, login)
+	//авторизация
+	if context.Get(r, "login") != login {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	err := a.userStorage.DeleteUser(ctx, login)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("error Encode id in delete.go: %w", err)

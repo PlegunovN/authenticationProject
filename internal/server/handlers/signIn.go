@@ -21,7 +21,7 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := a.storage.SignIn(ctx, login, password)
+	user, err := a.userStorage.SignIn(ctx, login, password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("error select books: %w", err)

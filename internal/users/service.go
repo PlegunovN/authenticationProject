@@ -12,6 +12,7 @@ import (
 
 type Service struct {
 	client *client
+	logger *zap.SugaredLogger
 }
 
 func New(db *sqlx.DB, logger *zap.SugaredLogger) *Service {
@@ -30,17 +31,41 @@ func hashPassword(password string) string {
 	return hash
 }
 
-func jwtToken(tokenSecretKey string) string {
+var TokenSecretKey = []byte("secretKey")
+
+func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 	// Создаём данные для токена
 	claims := make(jwt.MapClaims)
-	claims["exp"] = time.Now().Add(time.Minute * 1).Unix() // Устанавливаем срок действия токена в 1 минут
+	claims["ExpiresAt"] = time.Now().Add(10 * time.Hour)
+	claims["authorized"] = true
+	claims["login"] = login
 
 	// Генерируем подпись
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, _ := token.SignedString([]byte(tokenSecretKey)) // Используем секретный ключ для подписи токена
+	token := jwt.New(jwt.SigningMethodHS256)
+	token.Claims = claims
+	tokenString, err := token.SignedString(tokenSecretKey)
+	if err != nil {
+		return "", err
+	}
 
-	strToken := fmt.Sprint(signedToken)
-	return strToken // Выводим сгенерированный токен
+	return tokenString, nil // Выводим сгенерированный токен
+}
+
+func VerifyToken(tokenString string) (*jwt.Token, error) {
+	// Parse the token with the secret key
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			// fmt return errorf
+			return nil, nil
+		}
+		return TokenSecretKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 func (s Service) SignUp(ctx context.Context, login, password string) error {
@@ -57,21 +82,23 @@ func (s Service) DeleteUser(ctx context.Context, login string) error {
 func (s Service) SignIn(ctx context.Context, login, password string) (*Users, error) {
 	hash := hashPassword(password)
 
-	//создать токен jwt
-	tokenSecretKey := "secretKey"
-	token := jwtToken(tokenSecretKey)
+	user := &Users{}
 
-	user, err := s.client.loginUser(ctx, login, hash, token)
-	return user, err
-}
+	hashFromTable, err := s.client.getUserPasswordToValidate(ctx, login)
+	if hashFromTable == "" {
+		return nil, err
+	}
 
-func (s Service) Work() (string, error) {
+	// сравнить хеш из базы и от пользователя
+	if hashFromTable == hash {
+		//создать токен jwt
+		token, _ := jwtToken(TokenSecretKey, login)
+		user, err := s.client.generateUserToken(ctx, login, token)
+		return user, err
+	} else {
+		incorrectPasW := "incorrectPassWord"
+		user = &Users{ID: 0, Login: incorrectPasW, Password: incorrectPasW, Token: incorrectPasW}
+		return user, err
+	}
 
-	resp, err := s.client.work()
-	return resp, err
-}
-
-func (s Service) ValidateToken(ctx context.Context, login, token string) error {
-	err := s.client.validateToken(ctx, login, token)
-	return err
 }

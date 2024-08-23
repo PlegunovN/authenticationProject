@@ -16,7 +16,7 @@ func main() {
 
 	cfg, err := configs.LoadConfig("./.env")
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal("error load config", err)
 	}
 
 	db, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DbName, cfg.SslMode))
@@ -24,7 +24,7 @@ func main() {
 		logger.Fatalf("not connected to db: %w", err)
 	}
 
-	storage := users.New(db, logger)
-	server.AuthStart(storage, logger)
+	userStorage := users.New(db, logger)
+	server.Run(userStorage, logger)
 
 }

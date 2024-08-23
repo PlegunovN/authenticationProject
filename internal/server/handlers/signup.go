@@ -32,7 +32,7 @@ func (a Api) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.storage.SignUp(ctx, req.Login, req.Password)
+	err = a.userStorage.SignUp(ctx, req.Login, req.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("err in create.go: %w", err)
