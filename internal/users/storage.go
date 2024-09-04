@@ -53,7 +53,7 @@ func (s client) deleteUser(ctx context.Context, login string) error {
 	return nil
 }
 
-func (s client) getUserPasswordToValidate(ctx context.Context, login string) (string, error) {
+func (s client) getUserPassword(ctx context.Context, login string) (string, error) {
 
 	//получить hash по логину
 	query := "SELECT password FROM users WHERE login = $1"

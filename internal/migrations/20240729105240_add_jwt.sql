@@ -5,5 +5,5 @@ ALTER TABLE users ADD COLUMN token VARCHAR(999);
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE users;
+ALTER TABLE users DROP COLUMN token;
 -- +goose StatementEnd

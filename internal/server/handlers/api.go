@@ -6,13 +6,13 @@ import (
 )
 
 type Api struct {
-	userStorage *users.Service
+	userService *users.Service
 	logger      *zap.SugaredLogger
 }
 
-func New(storage *users.Service, logger *zap.SugaredLogger) *Api {
+func New(service *users.Service, logger *zap.SugaredLogger) *Api {
 	return &Api{
-		userStorage: storage,
+		userService: service,
 		logger:      logger,
 	}
 }

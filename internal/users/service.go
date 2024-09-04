@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -31,7 +32,15 @@ func hashPassword(password string) string {
 	return hash
 }
 
-var TokenSecretKey = []byte("secretKey")
+func secretKey(logger zap.SugaredLogger) []byte {
+	sk, err := configs.LoadSecretKey("./.env")
+	if err != nil {
+		logger.Error(err)
+	}
+	return []byte(sk.Key)
+}
+
+var TokenSecretKey = secretKey(zap.SugaredLogger{})
 
 func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 	// Создаём данные для токена
@@ -82,8 +91,6 @@ func (s Service) DeleteUser(ctx context.Context, login string) error {
 func (s Service) SignIn(ctx context.Context, login, password string) (*Users, error) {
 	hash := hashPassword(password)
 
-	user := &Users{}
-
 	hashFromTable, err := s.client.getUserPasswordToValidate(ctx, login)
 	if hashFromTable == "" {
 		return nil, err
@@ -92,14 +99,17 @@ func (s Service) SignIn(ctx context.Context, login, password string) (*Users, er
 	// сравнить хеш из базы и от пользователя
 	if hashFromTable == hash {
 		//создать токен jwt
-		token, _ := jwtToken(TokenSecretKey, login)
+		token, err := jwtToken(TokenSecretKey, login)
 		//передать токен юзеру
+		if err != nil {
+			return nil, err
+		}
+
 		fmt.Println(token)
-		return nil, err
+		return nil, nil
+
 	} else {
-		incorrectPasW := "incorrectPassWord"
-		user = &Users{ID: 0, Login: incorrectPasW, Password: incorrectPasW, Token: incorrectPasW}
-		return user, err
+		return nil, ErrorPasswordIncorrect{}
 	}
 
 }

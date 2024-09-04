@@ -22,7 +22,7 @@ func (a Api) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := a.userStorage.DeleteUser(ctx, login)
+	err := a.userService.DeleteUser(ctx, login)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("error Encode id in delete.go: %w", err)
