@@ -55,7 +55,7 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 	// Parse the token with the secret key
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			// fmt return errorf
+
 			return nil, nil
 		}
 		return TokenSecretKey, nil
@@ -93,8 +93,9 @@ func (s Service) SignIn(ctx context.Context, login, password string) (*Users, er
 	if hashFromTable == hash {
 		//создать токен jwt
 		token, _ := jwtToken(TokenSecretKey, login)
-		user, err := s.client.generateUserToken(ctx, login, token)
-		return user, err
+		//передать токен юзеру
+		fmt.Println(token)
+		return nil, err
 	} else {
 		incorrectPasW := "incorrectPassWord"
 		user = &Users{ID: 0, Login: incorrectPasW, Password: incorrectPasW, Token: incorrectPasW}

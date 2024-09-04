@@ -1,17 +1,16 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/PlegunovN/authenticationProject/internal/users"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/context"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 )
 
-// аутонтификация
-func AuthMW(next http.HandlerFunc) http.HandlerFunc {
+// аутентификация
+func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		token := r.Header.Get("Authorization")
@@ -32,7 +31,7 @@ func AuthMW(next http.HandlerFunc) http.HandlerFunc {
 			return users.TokenSecretKey, nil
 		})
 		if err != nil {
-			fmt.Println("Error parsing token:", err)
+			logger.Errorf("Error parsing token: %w", err)
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
@@ -40,15 +39,11 @@ func AuthMW(next http.HandlerFunc) http.HandlerFunc {
 		claims := parsedToken.Claims.(jwt.MapClaims)
 
 		login := claims["login"].(string)
-		exp := claims["ExpiresAt"].(string)
-		fmt.Println(exp)
-		fmt.Println(login)
-		fmt.Println(parsedToken.Claims)
 
 		_, err = users.VerifyToken(token)
-		log.Print(err)
 		if err != nil {
-
+			logger.Errorf("Verify Token error: %w", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 

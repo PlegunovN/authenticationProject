@@ -24,7 +24,7 @@ func main() {
 		logger.Fatalf("not connected to db: %w", err)
 	}
 
-	userStorage := users.New(db, logger)
-	server.Run(userStorage, logger)
+	userService := users.New(db, logger)
+	server.Run(userService, logger)
 
 }

@@ -65,34 +65,3 @@ func (s client) getUserPasswordToValidate(ctx context.Context, login string) (st
 	}
 	return hashFromTable, err
 }
-
-func (s client) generateUserToken(ctx context.Context, login, token string) (*Users, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-			s.logger.Errorf("Delete User error - rollback: %w", err)
-			return
-		}
-		tx.Commit()
-		return
-	}()
-
-	//записываем токен в базу
-	query := "UPDATE users SET token = $1 WHERE login = $2"
-	_, err = tx.ExecContext(ctx, query, token, login)
-	if err != nil {
-		return nil, err
-	}
-
-	// otдаем для примера user
-	query = "SELECT * FROM users WHERE login = $1"
-	user := &Users{}
-	err = tx.GetContext(ctx, user, query, login)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, err
-
-}

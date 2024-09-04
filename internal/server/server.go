@@ -9,9 +9,9 @@ import (
 	"net/http"
 )
 
-func Run(storage *users.Service, logger *zap.SugaredLogger) {
+func Run(service *users.Service, logger *zap.SugaredLogger) {
 
-	api := handlers.New(storage, logger)
+	api := handlers.New(service, logger)
 
 	r := mux.NewRouter()
 
@@ -22,7 +22,6 @@ func Run(storage *users.Service, logger *zap.SugaredLogger) {
 	r.HandleFunc("/sign_up", api.SignUp).Methods("POST")
 	r.HandleFunc("/delete", middleware.AuthMW(api.DeleteUser)).Methods("DELETE")
 	r.HandleFunc("/sign_in", api.SignIn).Methods("GET")
-	//r.HandleFunc("/work", AuthMW(api.Work)).Methods("GET")
 
 	err := http.ListenAndServe("127.0.0.1:8081", handler)
 	logger.Fatalf("server auth dont start, err: %w", err, handler)
