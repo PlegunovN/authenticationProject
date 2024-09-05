@@ -29,7 +29,7 @@ func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger, tokenSecretKey *co
 		token = parts[1]
 
 		parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-			return tokenSecretKey.Key, nil
+			return tokenSecretKey.DBSecretKey, nil
 		})
 		if err != nil {
 			logger.Errorf("Error parsing token: %w", err)

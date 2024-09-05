@@ -39,7 +39,7 @@ func (s client) deleteUser(ctx context.Context, login string) error {
 	defer func() {
 		if err != nil {
 			tx.Rollback()
-			s.logger.Errorf("Delete User error - rollback: %w", err)
+			s.logger.Errorf("Delete DBUser error - rollback: %w", err)
 			return
 		}
 		tx.Commit()

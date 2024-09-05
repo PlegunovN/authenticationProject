@@ -6,13 +6,13 @@ import (
 )
 
 type Config struct {
-	Host     string `mapstructure:"DB_host"`
-	Port     string `mapstructure:"DB_port"`
-	User     string `mapstructure:"DB_user"`
-	Password string `mapstructure:"DB_password"`
-	DbName   string `mapstructure:"DB_name"`
-	SslMode  string `mapstructure:"DB_sslmode"`
-	Key      string `mapstructure:"SECRET_KEY"`
+	DBHost      string `mapstructure:"DB_host"`
+	DBPort      string `mapstructure:"DB_port"`
+	DBUser      string `mapstructure:"DB_user"`
+	DBPassword  string `mapstructure:"DB_password"`
+	DBName      string `mapstructure:"DB_name"`
+	DBSslMode   string `mapstructure:"DB_sslmode"`
+	DBSecretKey string `mapstructure:"SECRET_KEY"`
 }
 
 func LoadConfig(path string) (cfg *Config, err error) {

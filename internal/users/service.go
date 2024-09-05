@@ -59,7 +59,7 @@ func VerifyToken(tokenString string, tokenSekretKey *configs.Config) (*jwt.Token
 
 			return nil, nil
 		}
-		return []byte(tokenSekretKey.Key), nil
+		return []byte(tokenSekretKey.DBSecretKey), nil
 	})
 
 	if err != nil {
@@ -91,7 +91,7 @@ func (s Service) SignIn(ctx context.Context, login, password string) (string, er
 	// сравнить хеш из базы и от пользователя
 	if hashFromTable == hash {
 		//создать токен jwt
-		token, err := jwtToken([]byte(s.tokenSecretKey.Key), login)
+		token, err := jwtToken([]byte(s.tokenSecretKey.DBSecretKey), login)
 		//передать токен юзеру
 		if err != nil {
 			return "", err
