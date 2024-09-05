@@ -22,7 +22,7 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := a.userService.SignIn(ctx, login, password)
+	token, err := a.userService.SignIn(ctx, login, password)
 	if err != nil {
 		if _, ok := err.(users.ErrorPasswordIncorrect); ok {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -33,12 +33,12 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user == nil {
+	if token == "" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	if err = json.NewEncoder(w).Encode(user); err != nil {
+	if err = json.NewEncoder(w).Encode(token); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("error Encode books in getbooks.go: %w", err)
 		return

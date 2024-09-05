@@ -60,7 +60,6 @@ func (s client) getUserPassword(ctx context.Context, login string) (string, erro
 	var hashFromTable string
 	err := s.db.GetContext(ctx, &hashFromTable, query, login)
 	if err != nil {
-
 		return "", nil
 	}
 	return hashFromTable, err

@@ -88,12 +88,12 @@ func (s Service) DeleteUser(ctx context.Context, login string) error {
 	return err
 }
 
-func (s Service) SignIn(ctx context.Context, login, password string) (*Users, error) {
+func (s Service) SignIn(ctx context.Context, login, password string) (string, error) {
 	hash := hashPassword(password)
 
-	hashFromTable, err := s.client.getUserPasswordToValidate(ctx, login)
+	hashFromTable, err := s.client.getUserPassword(ctx, login)
 	if hashFromTable == "" {
-		return nil, err
+		return "", err
 	}
 
 	// сравнить хеш из базы и от пользователя
@@ -102,14 +102,13 @@ func (s Service) SignIn(ctx context.Context, login, password string) (*Users, er
 		token, err := jwtToken(TokenSecretKey, login)
 		//передать токен юзеру
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 
-		fmt.Println(token)
-		return nil, nil
+		return token, nil
 
 	} else {
-		return nil, ErrorPasswordIncorrect{}
+		return "", ErrorPasswordIncorrect{}
 	}
 
 }
