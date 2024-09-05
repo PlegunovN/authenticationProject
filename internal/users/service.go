@@ -14,7 +14,7 @@ import (
 type Service struct {
 	client         *client
 	logger         *zap.SugaredLogger
-	tokenSecretKey *configs.SecretKey
+	tokenSecretKey configs.SecretKey
 }
 
 func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey *configs.SecretKey) *Service {

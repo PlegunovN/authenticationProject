@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/PlegunovN/authenticationProject/internal/users"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/context"
@@ -10,7 +11,7 @@ import (
 )
 
 // аутентификация
-func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
+func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger, tokenSecretKey *configs.SecretKey) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		token := r.Header.Get("Authorization")
@@ -28,7 +29,7 @@ func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
 		token = parts[1]
 
 		parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-			return users.TokenSecretKey, nil
+			return tokenSecretKey.Key, nil
 		})
 		if err != nil {
 			logger.Errorf("Error parsing token: %w", err)
@@ -40,7 +41,7 @@ func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger) http.HandlerFunc {
 
 		login := claims["login"].(string)
 
-		_, err = users.VerifyToken(token)
+		_, err = users.VerifyToken(token, tokenSecretKey)
 		if err != nil {
 			logger.Errorf("Verify Token error: %w", err)
 			w.WriteHeader(http.StatusInternalServerError)

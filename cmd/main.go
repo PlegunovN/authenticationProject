@@ -29,7 +29,7 @@ func main() {
 		logger.Error(err)
 	}
 
-	userService := users.New(db, logger, sk.Key)
-	server.Run(userService, logger)
+	userService := users.New(db, logger, sk)
+	server.Run(userService, logger, sk)
 
 }
