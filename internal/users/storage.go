@@ -2,13 +2,15 @@ package users
 
 import (
 	"context"
+	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
 type client struct {
-	db     *sqlx.DB
-	logger *zap.SugaredLogger
+	db             *sqlx.DB
+	logger         *zap.SugaredLogger
+	tokenSecretKey *configs.SecretKey
 }
 
 func (s client) createUser(ctx context.Context, users Users) error {

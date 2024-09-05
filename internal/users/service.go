@@ -12,15 +12,17 @@ import (
 )
 
 type Service struct {
-	client *client
-	logger *zap.SugaredLogger
+	client         *client
+	logger         *zap.SugaredLogger
+	tokenSecretKey *configs.SecretKey
 }
 
-func New(db *sqlx.DB, logger *zap.SugaredLogger) *Service {
+func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey *configs.SecretKey) *Service {
 	return &Service{
 		client: &client{
-			db:     db,
-			logger: logger,
+			db:             db,
+			logger:         logger,
+			tokenSecretKey: tokenSecretKey,
 		},
 	}
 }
@@ -31,16 +33,6 @@ func hashPassword(password string) string {
 	hash := fmt.Sprint(sum)
 	return hash
 }
-
-func secretKey(logger zap.SugaredLogger) []byte {
-	sk, err := configs.LoadSecretKey("./.env")
-	if err != nil {
-		logger.Error(err)
-	}
-	return []byte(sk.Key)
-}
-
-var TokenSecretKey = secretKey(zap.SugaredLogger{})
 
 func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 	// Создаём данные для токена
@@ -60,14 +52,14 @@ func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 	return tokenString, nil // Выводим сгенерированный токен
 }
 
-func VerifyToken(tokenString string) (*jwt.Token, error) {
+func VerifyToken(tokenString string, tokenSekretKey *configs.SecretKey) (*jwt.Token, error) {
 	// Parse the token with the secret key
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 
 			return nil, nil
 		}
-		return TokenSecretKey, nil
+		return []byte(tokenSekretKey.Key), nil
 	})
 
 	if err != nil {
@@ -99,7 +91,7 @@ func (s Service) SignIn(ctx context.Context, login, password string) (string, er
 	// сравнить хеш из базы и от пользователя
 	if hashFromTable == hash {
 		//создать токен jwt
-		token, err := jwtToken(TokenSecretKey, login)
+		token, err := jwtToken([]byte(s.tokenSecretKey.Key), login)
 		//передать токен юзеру
 		if err != nil {
 			return "", err
