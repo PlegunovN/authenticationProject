@@ -10,7 +10,7 @@ import (
 type client struct {
 	db             *sqlx.DB
 	logger         *zap.SugaredLogger
-	tokenSecretKey *configs.SecretKey
+	tokenSecretKey *configs.Config
 }
 
 func (s client) createUser(ctx context.Context, users Users) error {

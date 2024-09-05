@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func Run(userService *users.Service, logger *zap.SugaredLogger, secretKey *configs.SecretKey) {
+func Run(userService *users.Service, logger *zap.SugaredLogger, secretKey *configs.Config) {
 
 	api := handlers.New(userService, logger, secretKey)
 

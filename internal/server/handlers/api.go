@@ -9,10 +9,10 @@ import (
 type Api struct {
 	userService    *users.Service
 	logger         *zap.SugaredLogger
-	tokenSecretKey *configs.SecretKey
+	tokenSecretKey *configs.Config
 }
 
-func New(service *users.Service, logger *zap.SugaredLogger, tokenSecretKey *configs.SecretKey) *Api {
+func New(service *users.Service, logger *zap.SugaredLogger, tokenSecretKey *configs.Config) *Api {
 	return &Api{
 		userService:    service,
 		logger:         logger,

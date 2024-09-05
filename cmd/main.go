@@ -24,12 +24,7 @@ func main() {
 		logger.Fatalf("not connected to db: %w", err)
 	}
 
-	sk, err := configs.LoadSecretKey("./.env")
-	if err != nil {
-		logger.Error(err)
-	}
-
-	userService := users.New(db, logger, sk)
-	server.Run(userService, logger, sk)
+	userService := users.New(db, logger, cfg)
+	server.Run(userService, logger, cfg)
 
 }

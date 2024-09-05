@@ -11,7 +11,7 @@ import (
 )
 
 // аутентификация
-func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger, tokenSecretKey *configs.SecretKey) http.HandlerFunc {
+func AuthMW(next http.HandlerFunc, logger *zap.SugaredLogger, tokenSecretKey *configs.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		token := r.Header.Get("Authorization")

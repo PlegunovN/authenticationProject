@@ -14,10 +14,10 @@ import (
 type Service struct {
 	client         *client
 	logger         *zap.SugaredLogger
-	tokenSecretKey configs.SecretKey
+	tokenSecretKey configs.Config
 }
 
-func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey *configs.SecretKey) *Service {
+func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey *configs.Config) *Service {
 	return &Service{
 		client: &client{
 			db:             db,
@@ -52,7 +52,7 @@ func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 	return tokenString, nil // Выводим сгенерированный токен
 }
 
-func VerifyToken(tokenString string, tokenSekretKey *configs.SecretKey) (*jwt.Token, error) {
+func VerifyToken(tokenString string, tokenSekretKey *configs.Config) (*jwt.Token, error) {
 	// Parse the token with the secret key
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
