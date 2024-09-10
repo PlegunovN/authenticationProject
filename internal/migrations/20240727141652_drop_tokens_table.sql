@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 DROP TABLE usersandtokens;
 DROP TABLE tokens;
-ALTER TABLE users ALTER COLUMN password TYPE VARCHAR(999);
+
 -- +goose StatementEnd
 
 -- +goose Down
@@ -16,5 +16,5 @@ CREATE TABLE tokens(
 id BIGSERIAL PRIMARY KEY,
 token VARCHAR(256)
 );
-ALTER TABLE users ALTER COLUMN password TYPE VARCHAR(25);
+
 -- +goose StatementEnd
