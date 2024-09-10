@@ -18,7 +18,7 @@ func (a Api) SignUp(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		a.logger.Errorf("error in decoder, create.go: %w", err)
+		a.logger.Errorf("error in decoder : %w", err)
 		return
 	}
 
@@ -35,7 +35,7 @@ func (a Api) SignUp(w http.ResponseWriter, r *http.Request) {
 	err = a.userService.SignUp(ctx, req.Login, req.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		a.logger.Errorf("err in create.go: %w", err)
+		a.logger.Errorf("error create user: %w", err)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)

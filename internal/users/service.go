@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -12,12 +11,10 @@ import (
 )
 
 type Service struct {
-	client         *client
-	logger         *zap.SugaredLogger
-	tokenSecretKey configs.Config
+	client *client
 }
 
-func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey *configs.Config) *Service {
+func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey string) *Service {
 	return &Service{
 		client: &client{
 			db:             db,
@@ -52,23 +49,6 @@ func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 	return tokenString, nil // Выводим сгенерированный токен
 }
 
-func VerifyToken(tokenString string, tokenSekretKey *configs.Config) (*jwt.Token, error) {
-	// Parse the token with the secret key
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-
-			return nil, nil
-		}
-		return []byte(tokenSekretKey.DBSecretKey), nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
-}
-
 func (s Service) SignUp(ctx context.Context, login, password string) error {
 	hash := hashPassword(password)
 	err := s.client.createUser(ctx, Users{Login: login, Password: hash})
@@ -91,7 +71,7 @@ func (s Service) SignIn(ctx context.Context, login, password string) (string, er
 	// сравнить хеш из базы и от пользователя
 	if hashFromTable == hash {
 		//создать токен jwt
-		token, err := jwtToken([]byte(s.tokenSecretKey.DBSecretKey), login)
+		token, err := jwtToken([]byte(s.client.tokenSecretKey), login)
 		//передать токен юзеру
 		if err != nil {
 			return "", err

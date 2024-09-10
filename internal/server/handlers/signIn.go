@@ -40,7 +40,7 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	if err = json.NewEncoder(w).Encode(token); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		a.logger.Errorf("error Encode books in getbooks.go: %w", err)
+		a.logger.Errorf("error Encode token: %w", err)
 		return
 	}
 

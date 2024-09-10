@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/PlegunovN/authenticationProject/internal/users"
 	"go.uber.org/zap"
 )
@@ -9,10 +8,10 @@ import (
 type Api struct {
 	userService    *users.Service
 	logger         *zap.SugaredLogger
-	tokenSecretKey *configs.Config
+	tokenSecretKey string
 }
 
-func New(service *users.Service, logger *zap.SugaredLogger, tokenSecretKey *configs.Config) *Api {
+func New(service *users.Service, logger *zap.SugaredLogger, tokenSecretKey string) *Api {
 	return &Api{
 		userService:    service,
 		logger:         logger,

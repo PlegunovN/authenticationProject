@@ -6,13 +6,13 @@ import (
 )
 
 type Config struct {
-	DBHost      string `mapstructure:"DB_host"`
-	DBPort      string `mapstructure:"DB_port"`
-	DBUser      string `mapstructure:"DB_user"`
-	DBPassword  string `mapstructure:"DB_password"`
-	DBName      string `mapstructure:"DB_name"`
-	DBSslMode   string `mapstructure:"DB_sslmode"`
-	DBSecretKey string `mapstructure:"SECRET_KEY"`
+	DBHost     string `mapstructure:"DB_host"`
+	DBPort     string `mapstructure:"DB_port"`
+	DBUser     string `mapstructure:"DB_user"`
+	DBPassword string `mapstructure:"DB_password"`
+	DBName     string `mapstructure:"DB_name"`
+	DBSslMode  string `mapstructure:"DB_sslmode"`
+	SecretKey  string `mapstructure:"SECRET_KEY"`
 }
 
 func LoadConfig(path string) (cfg *Config, err error) {
@@ -21,7 +21,6 @@ func LoadConfig(path string) (cfg *Config, err error) {
 
 	viper.SetConfigFile(path)
 	viper.SetConfigType("env")
-
 	viper.AutomaticEnv()
 
 	err = viper.ReadInConfig()

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/PlegunovN/authenticationProject/internal/server/handlers"
 	"github.com/PlegunovN/authenticationProject/internal/server/middleware"
 	"github.com/PlegunovN/authenticationProject/internal/users"
@@ -10,7 +9,7 @@ import (
 	"net/http"
 )
 
-func Run(userService *users.Service, logger *zap.SugaredLogger, secretKey *configs.Config) {
+func Run(userService *users.Service, logger *zap.SugaredLogger, secretKey string) {
 
 	api := handlers.New(userService, logger, secretKey)
 
@@ -18,7 +17,7 @@ func Run(userService *users.Service, logger *zap.SugaredLogger, secretKey *confi
 
 	handler := middleware.LoggingMiddleware(r, logger)
 
-	logger.Info("server start at 8081")
+	logger.Info("server auth start at 8081")
 
 	r.HandleFunc("/sign_up", api.SignUp).Methods("POST")
 	r.HandleFunc("/delete", middleware.AuthMW(api.DeleteUser, logger, secretKey)).Methods("DELETE")

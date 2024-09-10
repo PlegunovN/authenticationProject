@@ -24,7 +24,7 @@ func main() {
 		logger.Fatalf("not connected to db: %w", err)
 	}
 
-	userService := users.New(db, logger, cfg)
-	server.Run(userService, logger, cfg)
+	userService := users.New(db, logger, cfg.SecretKey)
+	server.Run(userService, logger, cfg.SecretKey)
 
 }
