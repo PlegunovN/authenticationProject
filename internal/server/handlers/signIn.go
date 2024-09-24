@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/PlegunovN/authenticationProject/internal/users"
 	"net/http"
 )
 
@@ -21,23 +22,27 @@ func (a Api) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := a.Storage.SignIn(ctx, login, password)
+	token, err := a.userService.SignIn(ctx, login, password)
 	if err != nil {
+		if _, ok := err.(users.ErrorPasswordIncorrect); ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		a.SLogger.Errorf("error select books: %w", err)
+		a.logger.Errorf("error select books: %w", err)
 		return
 	}
 
-	if user == nil {
+	if token == "" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(user)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(token); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		a.SLogger.Errorf("error Encode books in getbooks.go: %w", err)
+		a.logger.Errorf("error Encode token: %w", err)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }

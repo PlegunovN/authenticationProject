@@ -2,40 +2,30 @@ package users
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
 type client struct {
-	db     *sqlx.DB
-	logger *zap.SugaredLogger
+	db             *sqlx.DB
+	logger         *zap.SugaredLogger
+	tokenSecretKey string
 }
 
-func hashPassword(password string) string {
-	sum := sha256.Sum256([]byte(password))
-
-	hash := fmt.Sprint(sum)
-	return hash
-}
-
-func (s client) signUp(ctx context.Context, users Users) error {
+func (s client) createUser(ctx context.Context, users Users) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
 			tx.Rollback()
-			s.logger.Errorf("Rollback, sign up error: %w", err)
+			s.logger.Errorf("Rollback,  createUser error: %w", err)
 		}
 		tx.Commit()
+		return
 	}()
-
-	//обработка хеш
-	hash := hashPassword(users.Password)
 
 	//записываем логин и хеш пароля
 	query := "INSERT INTO users(login, password) VALUES ($1, $2)"
-	_, err = tx.ExecContext(ctx, query, users.Login, hash)
+	_, err = tx.ExecContext(ctx, query, users.Login, users.Password)
 	if err != nil {
 		return err
 	}
@@ -43,18 +33,20 @@ func (s client) signUp(ctx context.Context, users Users) error {
 	return nil
 }
 
-func (s client) deleteUser(ctx context.Context, id int64) error {
+func (s client) deleteUser(ctx context.Context, login string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
 			tx.Rollback()
-			s.logger.Errorf("Delete User error - rollback: %w", err)
+			s.logger.Errorf("Delete DBUser error - rollback: %w", err)
+			return
 		}
 		tx.Commit()
+		return
 	}()
 
-	query := "DELETE FROM users  WHERE id = $1"
-	_, err = tx.ExecContext(ctx, query, id)
+	query := "DELETE FROM users  WHERE login = $1"
+	_, err = tx.ExecContext(ctx, query, login)
 	if err != nil {
 		return err
 	}
@@ -62,41 +54,14 @@ func (s client) deleteUser(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s client) signIn(ctx context.Context, login, paswFromUser string) (*Users, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-			s.logger.Errorf("sign in error - rollback: %w", err)
-		}
-		tx.Commit()
-	}()
-	//получить токен по логину
+func (s client) getUserPassword(ctx context.Context, login string) (string, error) {
+
+	//получить hash по логину
 	query := "SELECT password FROM users WHERE login = $1"
-	var paswFromTable string
-	err = tx.GetContext(ctx, &paswFromTable, query, login)
+	var hashFromTable string
+	err := s.db.GetContext(ctx, &hashFromTable, query, login)
 	if err != nil {
-		return nil, err
+		return "", nil
 	}
-
-	//преобразовать пароль от пользователя в хеш
-	pFU := hashPassword(paswFromUser)
-
-	// сравнить хеш из базы и от пользователя
-	if paswFromTable == pFU {
-		query = "SELECT * FROM users WHERE login = $1 AND password = $2"
-		user := &Users{}
-		err = tx.GetContext(ctx, user, query, login, paswFromTable)
-		if err != nil {
-			return nil, err
-		}
-
-		return user, nil
-	} else {
-		incorectedPasW := "incorectedPassWord"
-		user := &Users{Login: login, Password: incorectedPasW}
-		return user, err
-	}
-
-	return nil, err
+	return hashFromTable, err
 }

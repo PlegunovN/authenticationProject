@@ -5,22 +5,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Postgres struct {
-	Host     string `mapstructure:"DB_host"`
-	Port     string `mapstructure:"DB_port"`
-	User     string `mapstructure:"DB_user"`
-	Password string `mapstructure:"DB_password"`
-	DbName   string `mapstructure:"DB_name"`
-	SslMode  string `mapstructure:"DB_sslmode"`
+type Config struct {
+	DBHost     string `mapstructure:"DB_host"`
+	DBPort     string `mapstructure:"DB_port"`
+	DBUser     string `mapstructure:"DB_user"`
+	DBPassword string `mapstructure:"DB_password"`
+	DBName     string `mapstructure:"DB_name"`
+	DBSslMode  string `mapstructure:"DB_sslmode"`
+	SecretKey  string `mapstructure:"SECRET_KEY"`
 }
 
-func LoadConfig(path string) (cfg *Postgres, err error) {
+func LoadConfig(path string) (cfg *Config, err error) {
 
-	cfg = new(Postgres)
+	cfg = new(Config)
 
 	viper.SetConfigFile(path)
 	viper.SetConfigType("env")
-
 	viper.AutomaticEnv()
 
 	err = viper.ReadInConfig()

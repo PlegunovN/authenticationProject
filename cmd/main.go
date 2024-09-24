@@ -8,24 +8,23 @@ import (
 	"github.com/PlegunovN/authenticationProject/internal/users"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
 )
 
 func main() {
-	sLogger := logger.InitLogger()
-	defer sLogger.Sync()
+	logger := logger.InitLogger()
+	defer logger.Sync()
 
 	cfg, err := configs.LoadConfig("./.env")
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal("error load config", err)
 	}
 
-	db, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DbName, cfg.SslMode))
+	db, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBSslMode))
 	if err != nil {
-		sLogger.Fatalf("not connected to db: %w", err)
+		logger.Fatalf("not connected to db: %w", err)
 	}
 
-	storage := users.New(db, sLogger)
-	server.AuthStart(storage, sLogger)
+	userService := users.New(db, logger, cfg.SecretKey)
+	server.Run(userService, logger, cfg.SecretKey)
 
 }

@@ -1,32 +1,31 @@
 package handlers
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/gorilla/context"
 	"net/http"
-	"strconv"
 )
 
 func (a Api) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	idB, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		a.SLogger.Errorf("error mux.Vars user in delete.go: %w", err)
-		return
-	}
 
-	id := int64(idB)
 	ctx := r.Context()
 
-	if id == 0 {
+	login := r.URL.Query().Get("login")
+	if login == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err = a.Storage.DeleteUser(ctx, id)
+	//авторизация
+	if context.Get(r, "login") != login {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	err := a.userService.DeleteUser(ctx, login)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		a.SLogger.Errorf("error Encode id in delete.go: %w", err)
+		a.logger.Errorf("error delete user: %w", err)
 		return
 	}
 
