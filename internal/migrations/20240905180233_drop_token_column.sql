@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE users ALTER COLUMN password TYPE VARCHAR(999);
-ALTER TABLE users DROP COLUMN token ;
+ALTER TABLE users DROP COLUMN token;
 -- +goose StatementEnd
 
 -- +goose Down
