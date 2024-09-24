@@ -72,11 +72,10 @@ func (s Service) SignIn(ctx context.Context, login, password string) (string, er
 	if hashFromTable == hash {
 		//создать токен jwt
 		token, err := jwtToken([]byte(s.client.tokenSecretKey), login)
-		//передать токен юзеру
 		if err != nil {
 			return "", err
 		}
-
+		//передать токен юзеру
 		return token, nil
 
 	} else {
