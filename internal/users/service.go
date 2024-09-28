@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/PlegunovN/authenticationProject/internal/rabbit"
 	"github.com/golang-jwt/jwt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -51,7 +52,16 @@ func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 
 func (s Service) SignUp(ctx context.Context, login, password string) error {
 	hash := hashPassword(password)
-	err := s.client.createUser(ctx, Users{Login: login, Password: hash})
+	id, err := s.client.createUser(ctx, Users{Login: login, Password: hash})
+	if id != -1 {
+		//передать токен в др сервис
+		err = rabbit.Send(s.client.logger, login, id)
+		if err != nil {
+			s.client.logger.Errorf("send message error %w", err)
+		}
+	} else {
+		return ErrorDuplicateLogin{}
+	}
 	return err
 }
 
@@ -75,6 +85,7 @@ func (s Service) SignIn(ctx context.Context, login, password string) (string, er
 		if err != nil {
 			return "", err
 		}
+
 		//передать токен юзеру
 		return token, nil
 

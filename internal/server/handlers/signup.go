@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/PlegunovN/authenticationProject/internal/users"
 	"net/http"
 )
 
@@ -34,6 +35,10 @@ func (a Api) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	err = a.userService.SignUp(ctx, req.Login, req.Password)
 	if err != nil {
+		if _, ok := err.(users.ErrorDuplicateLogin); ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		a.logger.Errorf("error create user: %w", err)
 		return
