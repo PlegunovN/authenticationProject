@@ -13,6 +13,7 @@ type Config struct {
 	DBName     string `mapstructure:"DB_name"`
 	DBSslMode  string `mapstructure:"DB_sslmode"`
 	SecretKey  string `mapstructure:"SECRET_KEY"`
+	RabbitConn string `mapstructure:"RABBIT_CONN"`
 }
 
 func LoadConfig(path string) (cfg *Config, err error) {

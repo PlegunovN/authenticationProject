@@ -27,7 +27,7 @@ func (s client) createUser(ctx context.Context, users Users) (int, error) {
 	query := "INSERT INTO users(login, password) VALUES ($1, $2)"
 	_, err = tx.ExecContext(ctx, query, users.Login, users.Password)
 	if err != nil {
-		return -1, err
+		return 0, err
 	} else {
 
 		//получайм id для отправки в другой сервис

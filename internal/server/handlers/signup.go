@@ -36,7 +36,7 @@ func (a Api) SignUp(w http.ResponseWriter, r *http.Request) {
 	err = a.userService.SignUp(ctx, req.Login, req.Password)
 	if err != nil {
 		if _, ok := err.(users.ErrorDuplicateLogin); ok {
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)

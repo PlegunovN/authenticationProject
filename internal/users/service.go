@@ -53,15 +53,15 @@ func jwtToken(tokenSecretKey []byte, login string) (string, error) {
 func (s Service) SignUp(ctx context.Context, login, password string) error {
 	hash := hashPassword(password)
 	id, err := s.client.createUser(ctx, Users{Login: login, Password: hash})
-	if id != -1 {
-		//передать токен в др сервис
-		err = rabbit.Send(s.client.logger, login, id)
-		if err != nil {
-			s.client.logger.Errorf("send message error %w", err)
-		}
-	} else {
-		return ErrorDuplicateLogin{}
+	if err != nil {
+		return err
 	}
+	//передать токен в др сервис
+	err = rabbit.Send(s.client.logger, login, id)
+	if err != nil {
+		s.client.logger.Errorf("send message error %w", err)
+	}
+
 	return err
 }
 
