@@ -9,7 +9,12 @@ import (
 	"time"
 )
 
-func Send(logger *zap.SugaredLogger, login string, id int) error {
+type message struct {
+	Login string `json:"login"`
+	Id    int    `json:"id"`
+}
+
+func (p *Publisher) Send(logger *zap.SugaredLogger, login string, id int) error {
 	//conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	//if err != nil {
 	//	logger.Error(err, "Failed to connect to RabbitMQ")
@@ -24,7 +29,7 @@ func Send(logger *zap.SugaredLogger, login string, id int) error {
 	//}
 	//defer ch.Close()
 
-	q, err := ch.QueueDeclare(
+	q, err := p.ch.QueueDeclare(
 		"hello", // name
 		false,   // durable
 		false,   // delete when unused
@@ -39,16 +44,12 @@ func Send(logger *zap.SugaredLogger, login string, id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	type message struct {
-		Login string `json:"login"`
-		Id    int    `json:"id"`
-	}
 	m := new(message)
 	m.Login = login
 	m.Id = id
 	body, err := json.Marshal(m)
 
-	err = ch.PublishWithContext(ctx,
+	err = p.ch.PublishWithContext(ctx,
 		"",     // exchange
 		q.Name, // routing key
 		false,  // mandatory

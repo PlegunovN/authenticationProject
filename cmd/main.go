@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/PlegunovN/authenticationProject/configs"
 	"github.com/PlegunovN/authenticationProject/internal/logger"
 	"github.com/PlegunovN/authenticationProject/internal/rabbit"
@@ -25,10 +26,14 @@ func main() {
 		logger.Fatalf("not connected to db: %w", err)
 	}
 
-	userService := users.New(db, logger, cfg.SecretKey)
+	publisher := rabbit.New(logger, cfg.RabbitConn)
+	err = publisher.Connect()
+	if err != nil {
+		logger.Fatal("server rabbit.Publisher dont start, err: %w", err)
+	}
 
-	rabbitConn := rabbit.New(logger, cfg.RabbitConn)
+	userService := users.New(db, logger, cfg.SecretKey, publisher)
 
-	server.Run(userService, logger, cfg.SecretKey, rabbitConn)
+	server.Run(userService, logger, cfg.SecretKey)
 
 }

@@ -12,16 +12,20 @@ import (
 )
 
 type Service struct {
-	client *client
+	client    *client
+	publisher *rabbit.Publisher
 }
 
-func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey string) *Service {
+func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey string, publisher *rabbit.Publisher) *Service {
 	return &Service{
 		client: &client{
 			db:             db,
 			logger:         logger,
 			tokenSecretKey: tokenSecretKey,
+		
 		},
+		publisher: publisher,
+		
 	}
 }
 
@@ -57,7 +61,7 @@ func (s Service) SignUp(ctx context.Context, login, password string) error {
 		return err
 	}
 	//передать токен в др сервис
-	err = rabbit.Send(s.client.logger, login, id)
+	err = s.publisher.Send(s.client.logger, login, id)
 	if err != nil {
 		s.client.logger.Errorf("send message error %w", err)
 	}

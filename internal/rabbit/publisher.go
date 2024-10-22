@@ -1,40 +1,52 @@
 package rabbit
 
+import "C"
 import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 type Publisher struct {
-	logger     *zap.SugaredLogger
-	rabbitConn string
+	Logger     *zap.SugaredLogger
+	RabbitConn string
+	ch         *amqp.Channel
+	conn       *amqp.Connection
 }
 
 func New(logger *zap.SugaredLogger, rabbitConn string) *Publisher {
 	return &Publisher{
-		logger:     logger,
-		rabbitConn: rabbitConn,
+		Logger:     logger,
+		RabbitConn: rabbitConn,
 	}
 }
 
-var (
-	ch *amqp.Channel
-)
+func (p *Publisher) Connect() (err error) {
 
-func PublisherRun(logger *zap.SugaredLogger, p *Publisher) error {
-	conn, err := amqp.Dial(p.rabbitConn)
+	p.conn, err = amqp.Dial(p.RabbitConn)
 	if err != nil {
-		logger.Error(err, "Failed to connect to RabbitMQ")
+		p.Logger.Error(err, "Failed to connect to RabbitMQ")
 		return err
 	}
 	//defer conn.Close()
 
-	ch, err = conn.Channel()
+	p.ch, err = p.conn.Channel()
 	if err != nil {
-		logger.Error(err, "Failed to open a channel")
+		p.Logger.Error(err, "Failed to open a channel")
 		return err
 	}
 	//defer ch.Close()
 
 	return nil
 }
+
+//func (p *Publisher) Close() {
+//	// итать про * в методах
+//	err := p.ch.Close()
+//	if err != nil {
+//		return
+//	}
+//	err = p.conn.Close()
+//	if err != nil {
+//		return
+//	}
+//}
