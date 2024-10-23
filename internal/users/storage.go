@@ -12,7 +12,7 @@ type client struct {
 	tokenSecretKey string
 }
 
-func (s client) createUser(ctx context.Context, users Users) error {
+func (s client) createUser(ctx context.Context, users Users) (int, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	defer func() {
 		if err != nil {
@@ -27,10 +27,16 @@ func (s client) createUser(ctx context.Context, users Users) error {
 	query := "INSERT INTO users(login, password) VALUES ($1, $2)"
 	_, err = tx.ExecContext(ctx, query, users.Login, users.Password)
 	if err != nil {
-		return err
-	}
+		return 0, err
+	} else {
 
-	return nil
+		//получайм id для отправки в другой сервис
+		var id int
+		query = "SELECT id FROM users WHERE login = $1"
+		err = tx.GetContext(ctx, &id, query, users.Login)
+
+		return id, nil
+	}
 }
 
 func (s client) deleteUser(ctx context.Context, login string) error {
