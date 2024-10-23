@@ -15,19 +15,6 @@ type message struct {
 }
 
 func (p *Publisher) Send(logger *zap.SugaredLogger, login string, id int) error {
-	//conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	//if err != nil {
-	//	logger.Error(err, "Failed to connect to RabbitMQ")
-	//	return err
-	//}
-	//defer conn.Close()
-
-	//ch, err := Conn.Channel()
-	//if err != nil {
-	//	logger.Error(err, "Failed to open a channel")
-	//	return err
-	//}
-	//defer ch.Close()
 
 	q, err := p.ch.QueueDeclare(
 		"hello", // name

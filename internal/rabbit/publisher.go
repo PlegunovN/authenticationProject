@@ -27,14 +27,12 @@ func (p *Publisher) Connect() (err error) {
 		p.Logger.Error(err, "Failed to connect to RabbitMQ")
 		return err
 	}
-	//defer conn.Close()
 
 	p.ch, err = p.conn.Channel()
 	if err != nil {
 		p.Logger.Error(err, "Failed to open a channel")
 		return err
 	}
-	//defer ch.Close()
 
 	return nil
 }

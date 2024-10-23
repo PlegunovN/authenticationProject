@@ -22,10 +22,8 @@ func New(db *sqlx.DB, logger *zap.SugaredLogger, tokenSecretKey string, publishe
 			db:             db,
 			logger:         logger,
 			tokenSecretKey: tokenSecretKey,
-		
 		},
 		publisher: publisher,
-		
 	}
 }
 
@@ -63,7 +61,7 @@ func (s Service) SignUp(ctx context.Context, login, password string) error {
 	//передать токен в др сервис
 	err = s.publisher.Send(s.client.logger, login, id)
 	if err != nil {
-		s.client.logger.Errorf("send message error %w", err)
+		s.client.logger.Errorf("send message error %v", err)
 	}
 
 	return err
